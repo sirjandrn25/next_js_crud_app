@@ -1,9 +1,41 @@
-import React from 'react'
-import Link from 'next/link'
+import React, { useEffect, useState } from 'react'
+
 import Button from '../../components/UI/Button'
 import LinkButton from '../../components/UI/LinkButton'
+import UserRow from '../../components/UserRow'
+import axios from 'axios'
+
+const users_api = '/api/users'
 
 const UserHome = () => {
+  const [users, setUsers] = useState([])
+  useEffect(() => {
+    axios
+      .get(users_api)
+      .then((resp) => {
+        setUsers(resp.data.users)
+      })
+      .catch((error) => {
+        console.log(error)
+      })
+    // fetchUsers()
+  }, [])
+
+  const deleteHandler = (user_id) => {
+    axios({
+      url: `${users_api}/${user_id}`,
+      method: 'delete',
+    })
+      .then((resp) => {
+        setUsers((prevState) => {
+          return prevState.filter((user) => user_id !== user.id)
+        })
+      })
+      .catch((error) => {
+        console.log(error)
+      })
+  }
+
   return (
     <div className='w-[1000px] flex flex-col p-5 border-2'>
       <h1 className='my-2 text-3xl font-bold border-b-4 py-3'>Users List</h1>
@@ -22,36 +54,18 @@ const UserHome = () => {
           </tr>
         </thead>
         <tbody>
-          <tr className='border-b-2'>
-            <td className=' py-2 font-medium text-gray-900 dark:text-white whitespace-nowrap'>Sirjan Tamang</td>
-            <td>sirjantmg99@gmail.com</td>
-            <td>Admin</td>
-            <td>
-              <Link href='/users/add'>
-                <a className='px-4 py-1 text-sm text-white bg-sky-400 w-[80px] rounded-lg shadow-lg hover:bg-sky-600'>
-                  Edit
-                </a>
-              </Link>
-              <button className='px-4 py-1 ml-3 text-sm text-white bg-red-400 w-[80px] rounded-lg shadow-lg hover:bg-red-600'>
-                delete
-              </button>
-            </td>
-          </tr>
-          <tr className='border-b-2'>
-            <td className=' py-2 font-medium text-gray-900 dark:text-white whitespace-nowrap'>Sirjan Tamang</td>
-            <td>sirjantmg99@gmail.com</td>
-            <td>Admin</td>
-            <td>
-              <Link href='/users/add'>
-                <a className='px-4 py-1 text-sm text-white bg-sky-400 w-[80px] rounded-lg shadow-lg hover:bg-sky-600'>
-                  Edit
-                </a>
-              </Link>
-              <button className='px-4 py-1 ml-3 text-sm text-white bg-red-400 w-[80px] rounded-lg shadow-lg hover:bg-red-600'>
-                delete
-              </button>
-            </td>
-          </tr>
+          {users.map((user) => {
+            return (
+              <UserRow
+                onDelete={deleteHandler}
+                fullName={user.fname + ' ' + user.lname}
+                email={user.email}
+                roll={user.roll}
+                key={user.id}
+                user_id={user.id}
+              />
+            )
+          })}
         </tbody>
       </table>
     </div>

@@ -1,46 +1,48 @@
-import React from 'react'
-import InputField from '../../components/UI/InputField'
-import SelectField from '../../components/UI/SelectField'
-import Button from '../../components/UI/Button'
+import React, { useEffect, useState } from 'react'
+import InputField from '../../../components/UI/InputField'
+import SelectField from '../../../components/UI/SelectField'
+import Button from '../../../components/UI/Button'
 import Link from 'next/link'
-import useInput from '../../hooks/useInput'
+import useInput from '../../../hooks/useInput'
 import axios from 'axios'
-import { isEmpty, isEmail, isPassword, titleOptions, rollOptions } from '../../helpers/validation'
+import { useRouter } from 'next/router'
+import { isEmpty, isEmail, isPassword, titleOptions, rollOptions } from '../../../helpers/validation'
 
 const users_api = '/api/users'
 
-const AddUser = () => {
+const UserEdit = ({ data }) => {
+  const [showPass, setShowPass] = useState(false)
   const {
     inputState: fNameState,
     inputChangeHandler: fNameChangeHandler,
     error: fNameError,
     inputBlurHandler: fNameBlurHandler,
-  } = useInput(isEmpty)
+  } = useInput(isEmpty, data.fname)
   const {
     inputState: titleState,
     inputChangeHandler: titleChangeHandler,
     error: titleError,
     inputBlurHandler: titleBlurHandler,
-  } = useInput(isEmpty)
+  } = useInput(isEmpty, data.title)
   const {
     inputState: lNameState,
     inputChangeHandler: lNameChangeHandler,
     error: lNameError,
     inputBlurHandler: lNameBlurHandler,
-  } = useInput(isEmpty)
+  } = useInput(isEmpty, data.lname)
   const {
     inputState: emailState,
     inputChangeHandler: emailChangeHandler,
     error: emailError,
     inputBlurHandler: emailBlurHandler,
-  } = useInput(isEmail)
+  } = useInput(isEmail, data.email)
 
   const {
     inputState: rollState,
     inputChangeHandler: rollChangeHandler,
     error: rollError,
     inputBlurHandler: rollBlurHandler,
-  } = useInput(isEmpty)
+  } = useInput(isEmpty, data.roll)
 
   const {
     inputState: passwordState,
@@ -65,18 +67,14 @@ const AddUser = () => {
     lNameState.inputValid &&
     emailState.inputValid &&
     titleState.inputValid &&
-    rollState.inputValid &&
-    passwordState.inputValid &&
-    confirmPasswordState.inputValid
+    rollState.inputValid
 
   const submitHandler = (e) => {
     e.preventDefault()
-    // console.log(titleState.inputValid)
-    // console.log(fNameState.inputValid)
-    // console.log(lNameState.inputValid)
-    // console.log(rollState.inputValid)
-    // console.log(emailState.inputValid)
-    // console.log(passwordState.inputValid)
+    console.log(titleState.inputValid)
+    console.log(fNameState.inputValid)
+    console.log(lNameState.inputValid)
+    console.log(rollState.inputValid)
 
     if (!isValidSubmit) {
       emailBlurHandler()
@@ -88,23 +86,27 @@ const AddUser = () => {
       titleBlurHandler()
       return
     }
-    // console.log('successfully submited')
-    const config = {
-      method: 'post',
-      url: users_api,
+
+    let config = {
+      method: 'put',
+      url: `${users_api}/${data.id}`,
       headers: {
         'Content-Type': 'application/json',
       },
+
       data: {
-        id: Math.floor(Math.random() * 1000),
         title: titleState.value,
         fname: fNameState.value,
         lname: lNameState.value,
         email: emailState.value,
-        password: passwordState.value,
+
         roll: rollState.value,
       },
     }
+    if (passwordState.value) {
+      config['data']['password'] = passwordState.value
+    }
+
     axios(config)
       .then((resp) => {
         console.log(resp.data)
@@ -120,7 +122,7 @@ const AddUser = () => {
 
   return (
     <div className='w-[1000px] flex flex-col p-5 border-2'>
-      <h1 className='text-3xl font-bold p-3 border-b-4'>Add New User</h1>
+      <h1 className='text-3xl font-bold p-3 border-b-4'>Edit User</h1>
       <form action='' onSubmit={submitHandler} className='w-full'>
         <div className='grid grid-cols-5 w-full items-center gap-2'>
           <SelectField
@@ -176,6 +178,16 @@ const AddUser = () => {
             className='my-3 col-span-1'
           />
         </div>
+        <div className=' py-5 border-t-2 '>
+          <h1 className='text-2xl'>Password Maynot neccessary to change</h1>
+          <p className='my-3'>
+            old password{' '}
+            <span className='text-blue-500 cursor-pointer' onClick={(e) => setShowPass((prevState) => !prevState)}>
+              {showPass ? 'close' : 'show'}
+            </span>{' '}
+            {showPass && <span>{data.password}</span>}{' '}
+          </p>
+        </div>
         <div className='grid grid-cols-2 w-full items-center gap-2'>
           <InputField
             value={passwordState.value}
@@ -185,7 +197,7 @@ const AddUser = () => {
             type='password'
             placeholder='enter new password'
             label='Password'
-            className=' my-3 '
+            className=' '
           />
           <InputField
             value={confirmPasswordState.value}
@@ -195,7 +207,7 @@ const AddUser = () => {
             type='password'
             placeholder='enter confirm password'
             label='Confirm Password'
-            className=' my-3 '
+            className=''
           />
         </div>
         <div className='my-3 flex flex-row items-center'>
@@ -210,4 +222,15 @@ const AddUser = () => {
   )
 }
 
-export default AddUser
+export async function getServerSideProps({ params }) {
+  //   const user = await userService.getById(params.id)
+  const { userId } = params
+  const response = await fetch(`http://localhost:3000/api/users/${userId}`)
+  const data = await response.json()
+
+  return {
+    props: { data },
+  }
+}
+
+export default UserEdit

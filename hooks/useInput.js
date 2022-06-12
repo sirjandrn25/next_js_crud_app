@@ -1,4 +1,4 @@
-import React, { useReducer } from 'react'
+import React, { useEffect, useReducer } from 'react'
 
 const initialState = {
   value: '',
@@ -25,13 +25,26 @@ const inputReducer = (state, action) => {
         inputTouch: false,
         value: '',
       }
+    case 'input_initialize':
+      return {
+        ...state,
+        value: action.payload,
+
+        inputValid: true,
+      }
     default:
       return state
   }
 }
 
-const useInput = (validateFunc) => {
+const useInput = (validateFunc, initVal) => {
   const [state, dispatch] = useReducer(inputReducer, initialState)
+  useEffect(() => {
+    if (initVal) {
+      dispatch({ type: 'input_initialize', payload: initVal })
+    }
+  }, [])
+
   const error = state.inputTouch && validateFunc(state.value)
 
   const inputChangeHandler = (e) => {
@@ -46,6 +59,9 @@ const useInput = (validateFunc) => {
   const inputResetHandler = (e) => {
     dispatch({ type: 'input_reset' })
   }
+  const inputInitializeHandler = (initVal) => {
+    dispatch({ type: 'input_initialize', payload: initVal })
+  }
 
   return {
     inputState: state,
@@ -53,6 +69,7 @@ const useInput = (validateFunc) => {
     error,
     inputBlurHandler,
     inputResetHandler,
+    inputInitializeHandler,
   }
 }
 
